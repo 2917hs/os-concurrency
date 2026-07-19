@@ -85,9 +85,11 @@ static int check_result(const config_t *cfg, const vector_t *vectors)
     if (cfg->parallel || cfg->deadlock_order)
         return 1; /* not a checkable configuration */
 
-    long expected = (long)cfg->num_threads * cfg->loops;
+    /* Unsigned modular arithmetic: the expected value wraps identically to the
+     * accumulation, so the comparison stays exact even if it overflows. */
+    unsigned int expected = (unsigned int)cfg->num_threads * (unsigned int)cfg->loops;
     for (int i = 0; i < vectors[0].length; i++) {
-        if (vectors[0].values[i] != (int)expected)
+        if (vectors[0].values[i] != expected)
             return -1;
     }
     return 0;
@@ -158,8 +160,8 @@ int driver_run(const config_t *cfg)
     if (cfg->check) {
         int r = check_result(cfg, vectors);
         if (r == 0) {
-            printf("check: PASS (all elements == %ld)\n",
-                   (long)cfg->num_threads * cfg->loops);
+            printf("check: PASS (all elements == %u)\n",
+                   (unsigned int)cfg->num_threads * (unsigned int)cfg->loops);
         } else if (r < 0) {
             printf("check: FAIL (lost updates - result does not match "
                    "num_threads*loops)\n");

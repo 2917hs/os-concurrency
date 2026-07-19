@@ -19,10 +19,16 @@
 #include <stdio.h>
 
 typedef struct {
-    int             *values;  /* owned heap buffer of `length` ints */
-    int              length;  /* element count, > 0                 */
-    int              id;      /* stable ordering key, assigned once */
-    pthread_mutex_t  lock;    /* guards `values`                    */
+    /* Elements are unsigned so that repeated accumulation has well-defined
+     * modular (wraparound) semantics. Under the -d stress configuration the
+     * values feed back into each other and would overflow a signed int, which
+     * is undefined behaviour; unsigned makes that overflow defined and keeps
+     * the deterministic --check invariant exact (the values are only ever
+     * added and start at 0/1, so they are never meaningfully negative). */
+    unsigned int    *values;  /* owned heap buffer of `length` elements */
+    int              length;  /* element count, > 0                     */
+    int              id;      /* stable ordering key, assigned once      */
+    pthread_mutex_t  lock;    /* guards `values`                         */
 } vector_t;
 
 /*
@@ -30,7 +36,7 @@ typedef struct {
  * `fill`, record the id and length, and initialise the mutex. Aborts on
  * allocation or mutex-init failure (these are unrecoverable here).
  */
-void vector_init(vector_t *v, int id, int length, int fill);
+void vector_init(vector_t *v, int id, int length, unsigned int fill);
 
 /* Release the buffer and destroy the mutex. Safe to call once per init. */
 void vector_destroy(vector_t *v);

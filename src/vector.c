@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void vector_init(vector_t *v, int id, int length, int fill)
+void vector_init(vector_t *v, int id, int length, unsigned int fill)
 {
-    v->values = xmalloc((size_t)length * sizeof(int));
+    v->values = xmalloc((size_t)length * sizeof(*v->values));
     v->length = length;
     v->id     = id;
     for (int i = 0; i < length; i++)
@@ -34,6 +34,6 @@ void vector_print(const vector_t *v, FILE *out)
 {
     fprintf(out, "%d: [", v->id);
     for (int i = 0; i < v->length; i++)
-        fprintf(out, "%s%d", i ? ", " : "", v->values[i]);
+        fprintf(out, "%s%u", i ? ", " : "", v->values[i]);
     fprintf(out, "]\n");
 }

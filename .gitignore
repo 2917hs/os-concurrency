@@ -57,4 +57,5 @@ dkms.conf
 # Build output (this project)
 /build/
 /bin/
-/benchmark-results/raw-results.csv
+# Note: benchmark-results/ is committed - the CSV and summary are deliverables
+# and every number in them is a real measurement from run-benchmarks.sh.

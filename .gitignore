@@ -62,3 +62,6 @@ dkms.conf
 /bin/
 # Note: benchmark-results/ is committed - the CSV and summary are deliverables
 # and every number in them is a real measurement from run-benchmarks.sh.
+
+# macOS finder metadata
+.DS_Store

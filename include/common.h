@@ -38,7 +38,6 @@ void *xcalloc(size_t nmemb, size_t size);
  * uninitialised or destroyed mutex), never a recoverable runtime condition,
  * so aborting loudly is the correct response.
  */
-struct pthread_mutex_t_fwd; /* documentation only */
 #include <pthread.h>
 void mutex_init(pthread_mutex_t *m);
 void mutex_lock(pthread_mutex_t *m);

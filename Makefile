@@ -69,7 +69,9 @@ benchmarks: all
 	./scripts/run-benchmarks.sh
 
 clean:
-	rm -rf build bin benchmark-results/raw-results.csv
+	rm -rf build bin
+	# Note: benchmark-results/ is a committed deliverable and is NOT removed
+	# here. Regenerate it explicitly with `make benchmarks`.
 
 help:
 	@echo "Targets:"

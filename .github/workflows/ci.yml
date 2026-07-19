@@ -1,0 +1,71 @@
+name: ci
+
+# Build, test, and sanitize on every push / PR. Every step is bounded so a
+# regression that reintroduces a deadlock fails the job by timeout rather than
+# hanging the runner forever.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compiler versions
+        run: cc --version && make --version | head -1
+
+      - name: Build (strict warnings, -Werror)
+        run: make all
+
+      - name: Functional test suite
+        run: make test
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: ASan + UBSan — safe strategies must be clean
+        run: |
+          make asan CC=clang
+          for s in global-order try-wait avoid-hold-and-wait; do
+            echo "== asan/ubsan $s =="
+            ./bin/asan/vector-$s -n 8 -l 5000 --check
+          done
+
+      - name: UBSan — try-wait under -d stress must be clean
+        run: |
+          make ubsan CC=clang
+          ASAN_OPTIONS=halt_on_error=1 ./bin/ubsan/vector-try-wait -n 4 -l 20000 -d
+
+      - name: TSan — safe strategies must report no races
+        run: |
+          make tsan CC=clang
+          for s in global-order try-wait avoid-hold-and-wait; do
+            echo "== tsan $s =="
+            TSAN_OPTIONS=halt_on_error=1 ./bin/tsan/vector-$s -n 4 -l 10000 --check
+          done
+
+      - name: TSan — nolock is EXPECTED to race (documentation, non-fatal)
+        run: |
+          # This strategy is intentionally incorrect; we assert that TSan does
+          # detect the race, and treat "no race found" as the failure.
+          if ./bin/tsan/vector-nolock -n 4 -l 20000 2> tsan.log; then
+            echo "nolock did not abort under TSan";
+          fi
+          if grep -q "data race" tsan.log; then
+            echo "OK: TSan detected the expected nolock data race"
+          else
+            echo "FAIL: expected a data race in nolock but none was reported"
+            cat tsan.log
+            exit 1
+          fi
